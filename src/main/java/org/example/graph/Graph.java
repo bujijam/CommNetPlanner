@@ -3,10 +3,7 @@ package org.example.graph;
 import org.example.model.Edge;
 import org.example.model.City;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class Graph {
     // （城市索引表）{id: 城市}
@@ -35,7 +32,15 @@ public class Graph {
         return putEdgeInternal(fromId, toId, length);
     }
 
-    // 返回一条规范化的边（更新了邻接表和边索引表）
+    // 从外部（文件）更新边
+    public void upsertEdge(Edge edge){
+        Objects.requireNonNull(edge, "边不能为空");
+        requireCity(edge.fromId());
+        requireCity(edge.toId());
+        putEdgeInternal(edge.fromId(), edge.toId(), edge.length());
+    }
+
+    // 写入内部的邻接表和边索引表，返回一条规范化的边
     private Edge putEdgeInternal(int fromId, int toId, int length) {
         ensureDifferentVertices(fromId, toId);
         int a = Math.min(fromId, toId);
@@ -48,7 +53,7 @@ public class Graph {
         return normalized;
     }
 
-    // 生成边所对应的键，小id在前大id在后
+    // 获得边所对应的键，小id在前大id在后
     private String normalizedEdgeKey(int fromId, int toId) {
         int a = Math.min(fromId, toId);
         int b = Math.min(fromId, toId);
@@ -89,4 +94,75 @@ public class Graph {
     }
 
 
+    // 删除一个城市及其关联边
+    public void removeCity(int cityId){
+        if(!citiesById.containsKey(cityId)){
+            return;
+        }
+        // 只读的邻居id列表
+        List<Integer> neighbors = List.copyOf(adjacency.getOrDefault(cityId, Map.of()).keySet());
+        // 遍历邻居列表
+        for (int neighborId: neighbors){
+            // 逐条删除关联边
+            removeEdge(cityId, neighborId);
+        }
+        // 删除邻接表和城市索引的记录
+        adjacency.remove(cityId);
+        citiesById.remove(cityId);
+    }
+
+    // 删除无向边
+    private void removeEdge(int fromId, int toId) {
+        ensureDifferentVertices(fromId, toId);
+        int a = Math.min(fromId, toId);
+        int b = Math.max(fromId, toId);
+        edgesByKey.remove(normalizedEdgeKey(a, b));
+
+        Map<Integer, Edge> neighborOfA = adjacency.get(a);
+        if(neighborOfA != null) {
+            // 若a的邻居映射存在，则删除a->的邻接关系
+            neighborOfA.remove(b);
+        }
+        Map<Integer, Edge> neighborOfB = adjacency.get(b);
+        if(neighborOfB != null){
+            neighborOfB.remove(a);
+        }
+    }
+
+    // 按id查询城市
+    public Optional<City> city(int cityId){
+        // Optional是一个不可变容器，用于包装一个可能为null的对象，避免空指针异常
+        // ofNullable：若对象为null返回一个空的Optional
+        return Optional.ofNullable(citiesById.get(cityId));
+    }
+
+    // 返回所有城市
+    public Collection<City> cities(){
+        // 返回只读集合，避免外部直接改变内部状态
+        return Collections.unmodifiableCollection(citiesById.values());
+    }
+
+    // 判断某城市是否存在
+    public boolean hasCity(int cityId){
+        return citiesById.containsKey(cityId);
+    }
+
+    // 查询某城市的邻居边
+    public Map<Integer, Edge> neighbors(int cityId){
+        // 返回只读邻接表，若不存在则返回空映射
+        return Collections.unmodifiableMap(adjacency.getOrDefault(cityId, Map.of()));
+    }
+
+    // 判断边是否存在
+    public boolean hasEdge(int fromId, int toId) {
+        ensureDifferentVertices(fromId, toId);
+        int a = Math.min(fromId, toId);
+        int b = Math.max(fromId, toId);
+        return edgesByKey.containsKey(normalizedEdgeKey(a, b));
+    }
+
+    // 返回所有边
+    public Collection<Edge> edges() {
+        return Collections.unmodifiableCollection(edgesByKey.values());
+    }
 }
