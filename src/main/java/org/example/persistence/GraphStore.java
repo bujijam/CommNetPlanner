@@ -26,6 +26,14 @@ public class GraphStore {
         this.edgesFile = Objects.requireNonNull(edgesFile, "边文件路径不能为空");
     }
 
+    public Path citiesFile() {
+        return citiesFile;
+    }
+
+    public Path edgesFile() {
+        return edgesFile;
+    }
+
     // 从csv文件读取并构建图
     public Graph load(){
         Graph graph = new Graph();

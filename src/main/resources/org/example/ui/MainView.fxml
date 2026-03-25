@@ -1,14 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="org.example.CommNetApp"
-            prefHeight="400.0" prefWidth="600.0">
-
-</AnchorPane>
+<BorderPane prefHeight="820.0" prefWidth="1360.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.ui.MainController">
+    <top>
+        <HBox spacing="10.0" style="-fx-padding: 12; -fx-background-color: linear-gradient(to right, #0f172a, #1e293b);">
+            <Label style="-fx-font-size: 18; -fx-text-fill: #e2e8f0; -fx-font-weight: bold;" text="CommNet Planner · JavaFX" />
+            <Separator orientation="VERTICAL" />
+            <Button mnemonicParsing="false" onAction="#onLoadData" text="导入数据" />
+            <Button mnemonicParsing="false" onAction="#onSaveData" text="保存数据" />
+            <Button mnemonicParsing="false" onAction="#onAnalyzeConnectivity" text="连通补边分析" />
+            <Label style="-fx-text-fill: #cbd5e1;" text="最短路源点" />
+            <TextField fx:id="shortestSourceField" prefWidth="90.0" promptText="城市ID" />
+            <Button mnemonicParsing="false" onAction="#onCalculateShortestPath" text="计算最短路" />
+            <Button mnemonicParsing="false" onAction="#onTraverseAllNoReturn" text="遍历全部(不回源)" />
+            <Button mnemonicParsing="false" onAction="#onTraverseAllReturn" text="遍历全部并回源" />
+            <Button mnemonicParsing="false" onAction="#onRunSteinerComparison" text="Steiner对比" />
+            <Button mnemonicParsing="false" onAction="#onToggleRightPanel" text="显示/隐藏右栏" />
+            <Label style="-fx-text-fill: #cbd5e1;" text="画布比例" />
+            <ComboBox fx:id="zoomComboBox" onAction="#onZoomPresetChanged" prefWidth="110.0" />
+            <Button mnemonicParsing="false" onAction="#onRunEsteinBenchmark" text="Estein250测试" />
+            <Button mnemonicParsing="false" onAction="#onGenerateBenchmarkData" text="生成220城压测" />
+            <Button mnemonicParsing="false" onAction="#onExportReportAssets" text="导出报告素材" />
+        </HBox>
+    </top>
+    <center>
+        <SplitPane fx:id="mainSplitPane" dividerPositions="0.67">
+            <StackPane fx:id="canvasContainer" minHeight="0.0" minWidth="0.0">
+                <Canvas fx:id="topologyCanvas" />
+            </StackPane>
+            <VBox fx:id="rightPanelBox" minHeight="0.0" minWidth="0.0" prefWidth="420.0" spacing="10.0" style="-fx-padding: 12; -fx-background-color: #f8fafc;">
+                <Accordion VBox.vgrow="ALWAYS">
+                    <panes>
+                        <TitledPane animated="false" expanded="true" text="城市管理">
+                            <content>
+                                <VBox spacing="8.0">
+                                    <HBox spacing="8.0">
+                                        <TextField fx:id="citySearchField" promptText="按ID或名称查找" HBox.hgrow="ALWAYS" />
+                                        <Button mnemonicParsing="false" onAction="#onSearchCity" text="查找" />
+                                    </HBox>
+                                    <TableView fx:id="cityTable" prefHeight="220.0">
+                                        <columns>
+                                            <TableColumn fx:id="cityIdColumn" prefWidth="65.0" text="ID" />
+                                            <TableColumn fx:id="cityNameColumn" prefWidth="130.0" text="名称" />
+                                            <TableColumn fx:id="cityXColumn" prefWidth="80.0" text="X" />
+                                            <TableColumn fx:id="cityYColumn" prefWidth="80.0" text="Y" />
+                                            <TableColumn fx:id="cityDescColumn" prefWidth="170.0" text="简介" />
+                                        </columns>
+                                    </TableView>
+                                    <GridPane hgap="8.0" vgap="8.0">
+                                        <columnConstraints>
+                                            <javafx.scene.layout.ColumnConstraints minWidth="65.0" prefWidth="70.0" />
+                                            <javafx.scene.layout.ColumnConstraints hgrow="ALWAYS" />
+                                        </columnConstraints>
+                                        <Label text="ID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="cityIdField" promptText="整数" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        <Label text="名称" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="cityNameField" promptText="城市名称" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <Label text="X" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="cityXField" promptText="整数" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                        <Label text="Y" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                        <TextField fx:id="cityYField" promptText="整数" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                        <Label text="简介" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                        <TextArea fx:id="cityDescArea" prefRowCount="3" promptText="城市简介" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                    </GridPane>
+                                    <HBox spacing="8.0">
+                                        <Button mnemonicParsing="false" onAction="#onAddCity" text="添加城市" />
+                                        <Button mnemonicParsing="false" onAction="#onUpdateCity" text="更新城市" />
+                                        <Button mnemonicParsing="false" onAction="#onDeleteCity" text="删除城市" />
+                                        <Button mnemonicParsing="false" onAction="#onClearCities" text="清空城市" />
+                                    </HBox>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                        <TitledPane animated="false" expanded="true" text="通信线路管理">
+                            <content>
+                                <VBox spacing="8.0">
+                                    <GridPane hgap="8.0" vgap="8.0">
+                                        <columnConstraints>
+                                            <javafx.scene.layout.ColumnConstraints minWidth="65.0" prefWidth="70.0" />
+                                            <javafx.scene.layout.ColumnConstraints hgrow="ALWAYS" />
+                                        </columnConstraints>
+                                        <Label text="起点ID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="edgeFromField" promptText="整数" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        <Label text="终点ID" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="edgeToField" promptText="整数" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    </GridPane>
+                                    <HBox spacing="8.0">
+                                        <Button mnemonicParsing="false" onAction="#onAddEdge" text="添加线路" />
+                                        <Button mnemonicParsing="false" onAction="#onDeleteEdge" text="删除线路" />
+                                        <Button mnemonicParsing="false" onAction="#onClearEdges" text="清空路线" />
+                                    </HBox>
+                                    <ListView fx:id="edgeListView" prefHeight="170.0" VBox.vgrow="ALWAYS" />
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                        <TitledPane animated="false" expanded="true" text="算法输出">
+                            <content>
+                                <TextArea fx:id="algorithmOutputArea" prefHeight="180.0" wrapText="true" />
+                            </content>
+                        </TitledPane>
+                    </panes>
+                </Accordion>
+            </VBox>
+        </SplitPane>
+    </center>
+    <bottom>
+        <HBox spacing="10.0" style="-fx-padding: 8; -fx-background-color: #e2e8f0;">
+            <padding>
+                <Insets bottom="2.0" left="4.0" right="4.0" top="2.0" />
+            </padding>
+            <Label text="状态：" />
+            <Label fx:id="statusLabel" text="Ready" HBox.hgrow="ALWAYS" />
+            <Separator orientation="VERTICAL" />
+            <Label fx:id="mouseCoordLabel" text="鼠标: -" />
+        </HBox>
+    </bottom>
+</BorderPane>
