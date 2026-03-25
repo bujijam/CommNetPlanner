@@ -299,6 +299,18 @@ public class MainController {
         viewCenteredTop = viewMargin + (drawableHeight - worldHeight * viewFitScale) / 2.0;
     }
 
+    private record Point(double x, double y) {
+    }
+
+    // 把画布坐标反算为世界坐标
+    private Point canvasToWorld(double canvasX, double canvasY) {
+        double sceneX = (canvasX - interactionController.offsetX()) / interactionController.scale();
+        double sceneY = (canvasY - interactionController.offsetY()) / interactionController.scale();
+        double worldX = (sceneX - viewCenteredLeft) / viewFitScale + worldMinX;
+        double worldY = worldMaxY - (sceneY - viewCenteredTop) / viewFitScale;
+        return new Point(worldX, worldY);
+    }
+
     private void showError(String message) {
         viewModel.setStatusText("错误: " + message);
         Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);

@@ -56,7 +56,7 @@ public class Graph {
     // 获得边所对应的键，小id在前大id在后
     public static String normalizedEdgeKey(int fromId, int toId) {
         int a = Math.min(fromId, toId);
-        int b = Math.min(fromId, toId);
+        int b = Math.max(fromId, toId);
         return a + "-" + b;
     }
 
