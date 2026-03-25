@@ -167,6 +167,43 @@ public class MainController {
         clearAlgorithmHighlights();
     }
 
+    @FXML
+    // 处理“添加线路”
+    private void onAddEdge() {
+        try {
+            Integer fromId = tryParseInt(edgeFromField.getText(), "线路起点编号");
+            Integer toId = tryParseInt(edgeToField.getText(), "线路终点编号");
+            if (fromId == null || toId == null) {
+                return;
+            }
+            graph.upsertEdge(fromId, toId);
+            refreshViews();
+            viewModel.setStatusText("线路已添加: " + fromId + " - " + toId);
+            clearAlgorithmHighlights();
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    // 处理“清空路线”
+    private void onClearEdges() {
+        // 创建确认对话框
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "确认清空所有路线吗？", ButtonType.OK, ButtonType.CANCEL);
+        confirm.setHeaderText("确认清空路线"); // 设置对话框标题
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            // 若用户未确认，取消清空
+            return;
+        }
+        // 先复制边快照，避免遍历中修改原集合
+        graph.edges().stream().map(edge -> new Edge(edge.fromId(), edge.toId(), edge.length())).toList()
+                .forEach(edge -> graph.removeEdge(edge.fromId(), edge.toId())); // 逐条删除所有边
+        edgeListView.getSelectionModel().clearSelection(); // 清除列表选中状态，避免悬挂选中
+        refreshViews();
+        clearAlgorithmHighlights();
+        viewModel.setStatusText("已清空所有路线。");
+    }
+
     private Integer tryParseInt(String raw, String fieldName) {
         try {
             return Integer.parseInt(raw.trim());

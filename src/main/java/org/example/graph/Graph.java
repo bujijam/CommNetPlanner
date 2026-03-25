@@ -112,7 +112,7 @@ public class Graph {
     }
 
     // 删除无向边
-    private void removeEdge(int fromId, int toId) {
+    public void removeEdge(int fromId, int toId) {
         ensureDifferentVertices(fromId, toId);
         int a = Math.min(fromId, toId);
         int b = Math.max(fromId, toId);
