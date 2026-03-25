@@ -115,6 +115,92 @@ public class MainController {
         }
     }
 
+    @FXML
+    // 处理“添加城市”
+    private void onAddCity() {
+        try {
+            // 从表单读取并校验城市字段
+            City city = readCityFromForm();
+            if (graph.city(city.id()).isPresent()) {
+                showError("城市编号已存在，请使用“更新城市”。");
+                return;
+            }
+            graph.upsertCity(city);
+            refreshViews();
+            viewModel.setStatusText("城市已添加: " + city.name());
+            // 数据变化后清除历史算法高亮，避免误导
+            clearAlgorithmHighlights();
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    // 处理“更新城市”
+    private void onUpdateCity() {
+        try {
+            City city = readCityFromForm();
+            graph.upsertCity(city);
+            refreshViews();
+            viewModel.setStatusText("城市已更新: " + city.name());
+            clearAlgorithmHighlights();
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    // 处理“删除城市”
+    private void onDeleteCity() {
+        // 解析编号输入，失败会弹错并返回 null
+        Integer id = tryParseInt(cityIdField.getText(), "城市编号");
+        if (id == null) {
+            return;
+        }
+        if (!graph.hasCity(id)) {
+            showError("城市不存在: " + id);
+            return;
+        }
+        graph.removeCity(id); // 从图中删除城市及关联边
+        refreshViews();
+        viewModel.setStatusText("城市已删除: " + id);
+        clearAlgorithmHighlights();
+    }
+
+    private Integer tryParseInt(String raw, String fieldName) {
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (Exception e) {
+            showError(fieldName + "必须是整数。");
+            return null;
+        }
+    }
+
+    // 清除历史算法高亮
+    private void clearAlgorithmHighlights() {
+        highlightedPathEdgeKeys.clear();
+        overlayHighlightedEdges = List.of();
+        suggestedEdges = List.of();
+        algorithmOutputArea.clear();
+        renderGraph();
+    }
+
+    private City readCityFromForm() {
+        Integer id = tryParseInt(cityIdField.getText(), "城市编号");
+        Integer x = tryParseInt(cityXField.getText(), "X 坐标");
+        Integer y = tryParseInt(cityYField.getText(), "Y 坐标");
+        String name = cityNameField.getText() == null ? "" : cityNameField.getText().trim();
+        String desc = cityDescArea.getText() == null ? "" : cityDescArea.getText().trim();
+
+        if (id == null || x == null || y == null) {
+            throw new IllegalArgumentException("请输入完整且合法的城市编号与坐标。");
+        }
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("城市名称不能为空。");
+        }
+        return new City(id, name, x, y, desc);
+    }
+
     private void loadFromDisk() {
         try {
             Graph loaded = graphStore.load();
