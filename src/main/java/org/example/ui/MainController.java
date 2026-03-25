@@ -10,6 +10,7 @@ import org.example.graph.Graph;
 import org.example.model.City;
 import org.example.model.Edge;
 import org.example.persistence.GraphStore;
+import org.example.service.*;
 import org.example.ui.interaction.InteractionController;
 import org.example.ui.render.TopologyCanvasRenderer;
 import org.example.ui.viewmodel.MainViewModel;
@@ -73,6 +74,10 @@ public class MainController {
 
     private final Graph graph = new Graph();
     private final GraphStore graphStore = new GraphStore(Path.of("data/cities.csv"), Path.of("data/edges.csv"));
+    private final AugmentConnectivityService augmentConnectivityService = new AugmentConnectivityService();
+    private final ShortestPathService shortestPathService = new ShortestPathService();
+    private final SteinerService steinerService = new SteinerService();
+    private final TraversalService traversalService = new TraversalService();
     private final InteractionController interactionController = new InteractionController();
     private final TopologyCanvasRenderer renderer = new TopologyCanvasRenderer();
     private final MainViewModel viewModel = new MainViewModel();
@@ -202,6 +207,60 @@ public class MainController {
         refreshViews();
         clearAlgorithmHighlights();
         viewModel.setStatusText("已清空所有路线。");
+    }
+
+    @FXML
+    private void onCalculateShortestPath() {
+        try {
+            Integer sourceId = tryParseInt(shortestSourceField.getText(), "最短路源点ID");
+            if (sourceId == null) {
+                return;
+            }
+            ShortestPathResult result = shortestPathService.calculate(graph, sourceId);
+
+            suggestedEdges = List.of();
+            highlightedPathEdgeKeys.clear();
+            overlayHighlightedEdges = List.of();
+            StringBuilder sb = new StringBuilder();
+            sb.append("【最短路径查询】源点: ").append(result.sourceId()).append("\n");
+            for (ShortestPathResult.PathEntry entry : result.entries()) {
+                if (!entry.reachable()) {
+                    sb.append("到城市 ").append(entry.targetId()).append(": 不可达\n");
+                    continue;
+                }
+                sb.append("到城市 ").append(entry.targetId())
+                        .append(": 距离=").append(entry.distance())
+                        .append(", 路径=").append(formatPath(entry.path()))
+                        .append("\n");
+            }
+
+            ShortestPathResult.PathEntry nearestReachable = result.entries().stream()
+                    .filter(ShortestPathResult.PathEntry::reachable)
+                    .findFirst()
+                    .orElse(null);
+            if (nearestReachable != null) {
+                highlightedPathEdgeKeys.addAll(toEdgeKeySet(nearestReachable.path()));
+                sb.append("\n已在画布高亮最近可达城市路径: ").append(formatPath(nearestReachable.path()));
+            }
+
+            algorithmOutputArea.setText(sb.toString());
+            renderGraph();
+            viewModel.setStatusText("最短路径计算完成。");
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private Set<String> toEdgeKeySet(List<Integer> path) {
+        Set<String> edgeKeys = new HashSet<>();
+        for (int i = 1; i < path.size(); i++) {
+            edgeKeys.add(Graph.normalizedEdgeKey(path.get(i - 1), path.get(i)));
+        }
+        return edgeKeys;
+    }
+
+    private String formatPath(List<Integer> path) {
+        return String.join(" -> ", path.stream().map(String::valueOf).toList());
     }
 
     private Integer tryParseInt(String raw, String fieldName) {
