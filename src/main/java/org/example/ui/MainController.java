@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Orientation;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -17,6 +18,7 @@ import org.example.ui.interaction.InteractionController;
 import org.example.ui.render.TopologyCanvasRenderer;
 import org.example.ui.viewmodel.MainViewModel;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -174,6 +176,46 @@ public class MainController {
     }
 
     @FXML
+    private void onSearchCity() {
+        String raw = citySearchField.getText() == null ? "" : citySearchField.getText().trim();
+        if (raw.isEmpty()) {
+            showError("请输入城市ID或名称。");
+            return;
+        }
+        City matched;
+        try {
+            int id = Integer.parseInt(raw);
+            matched = graph.city(id).orElse(null);
+        } catch (NumberFormatException ignored) {
+            String q = raw.toLowerCase();
+            matched = graph.cities().stream()
+                    .filter(city -> city.name() != null && city.name().toLowerCase().contains(q))
+                    .min(Comparator.comparingInt(City::id))
+                    .orElse(null);
+        }
+        if (matched == null) {
+            showError("未找到城市: " + raw);
+            return;
+        }
+        selectCityInTable(matched.id());
+        viewModel.setStatusText("已定位城市: " + matched.name() + "(" + matched.id() + ")");
+    }
+
+    @FXML
+    private void onClearCities() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "确认清空所有城市与线路吗？", ButtonType.OK, ButtonType.CANCEL);
+        confirm.setHeaderText("确认清空城市");
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            return;
+        }
+        graph.cities().stream().map(City::id).toList().forEach(graph::removeCity);
+        selectedCityId = null;
+        refreshViews();
+        clearAlgorithmHighlights();
+        viewModel.setStatusText("已清空所有城市与线路。");
+    }
+
+    @FXML
     // 处理“添加线路”
     private void onAddEdge() {
         try {
@@ -185,6 +227,36 @@ public class MainController {
             graph.upsertEdge(fromId, toId);
             refreshViews();
             viewModel.setStatusText("线路已添加: " + fromId + " - " + toId);
+            clearAlgorithmHighlights();
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onDeleteEdge() {
+        try {
+            Edge selected = edgeListView.getSelectionModel().getSelectedItem();
+            Integer fromId;
+            Integer toId;
+            if (selected != null) {
+                fromId = selected.fromId();
+                toId = selected.toId();
+            } else {
+                fromId = tryParseInt(edgeFromField.getText(), "线路起点编号");
+                toId = tryParseInt(edgeToField.getText(), "线路终点编号");
+                if (fromId == null || toId == null) {
+                    return;
+                }
+            }
+            if (!graph.hasEdge(fromId, toId)) {
+                showError("线路不存在: " + fromId + " - " + toId);
+                return;
+            }
+            graph.removeEdge(fromId, toId);
+            edgeListView.getSelectionModel().clearSelection();
+            refreshViews();
+            viewModel.setStatusText("线路已删除: " + fromId + " - " + toId);
             clearAlgorithmHighlights();
         } catch (Exception e) {
             showError(e.getMessage());
@@ -369,6 +441,199 @@ public class MainController {
         // 设置守护线程，应用关闭时可自动退出
         worker.setDaemon(true);
         worker.start();
+    }
+
+    @FXML
+    private void onAnalyzeConnectivity() {
+        try {
+            ConnectivityResult result = augmentConnectivityService.analyze(graph);
+            suggestedEdges = result.suggestedEdges();
+            highlightedPathEdgeKeys.clear();
+            overlayHighlightedEdges = List.of();
+            renderGraph();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("【连通性分析】\n")
+                    .append("连通分量数量: ").append(result.componentCount()).append("\n")
+                    .append("是否连通: ").append(result.connected() ? "是" : "否").append("\n");
+
+            for (int i = 0; i < result.components().size(); i++) {
+                sb.append("分量 ").append(i + 1).append(": ").append(result.components().get(i)).append("\n");
+            }
+
+            if (!result.suggestedEdges().isEmpty()) {
+                sb.append("建议新增线路（最小总长度）:\n");
+                for (Edge edge : result.suggestedEdges()) {
+                    sb.append("  ").append(edge.fromId()).append(" <-> ").append(edge.toId())
+                            .append(" (len=").append(edge.length()).append(")\n");
+                }
+                sb.append("新增总长度: ").append(result.suggestedTotalLength()).append("\n");
+            }
+            algorithmOutputArea.setText(sb.toString());
+            viewModel.setStatusText("连通性分析完成。");
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onTraverseAllNoReturn() {
+        runTraversal(false);
+    }
+
+    @FXML
+    private void onTraverseAllReturn() {
+        runTraversal(true);
+    }
+
+    @FXML
+    private void onToggleRightPanel() {
+        rightPanelHidden = !rightPanelHidden;
+        if (rightPanelHidden) {
+            if (mainSplitPane.getItems().contains(rightPanelBox)) {
+                lastDividerPosition = mainSplitPane.getDividerPositions()[0];
+                mainSplitPane.getItems().remove(rightPanelBox);
+            }
+        } else {
+            if (!mainSplitPane.getItems().contains(rightPanelBox)) {
+                mainSplitPane.getItems().add(rightPanelBox);
+                mainSplitPane.setDividerPositions(Math.max(0.2, Math.min(0.9, lastDividerPosition)));
+            }
+        }
+    }
+
+    @FXML
+    private void onZoomPresetChanged() {
+        String value = zoomComboBox.getValue();
+        if (value == null || !value.endsWith("%")) {
+            return;
+        }
+        try {
+            double targetScale = Double.parseDouble(value.substring(0, value.length() - 1)) / 100.0;
+            interactionController.setScale(targetScale, topologyCanvas.getWidth() / 2.0, topologyCanvas.getHeight() / 2.0);
+            renderGraph();
+        } catch (NumberFormatException ignored) {
+            showError("无效缩放比例: " + value);
+        }
+    }
+
+    @FXML
+    private void onGenerateBenchmarkData() {
+        final int cityCount = 220;
+        final int extraEdges = 420;
+        Random random = new Random(123456789L);
+
+        graph.cities().stream().map(City::id).toList().forEach(graph::removeCity);
+        for (int id = 1; id <= cityCount; id++) {
+            int x = random.nextInt(4500);
+            int y = random.nextInt(3200);
+            graph.upsertCity(new City(id, "C" + id, x, y, "auto-generated"));
+        }
+        for (int id = 1; id < cityCount; id++) {
+            graph.upsertEdge(id, id + 1);
+        }
+        int added = 0;
+        while (added < extraEdges) {
+            int a = 1 + random.nextInt(cityCount);
+            int b = 1 + random.nextInt(cityCount);
+            if (a == b) {
+                continue;
+            }
+            graph.upsertEdge(a, b);
+            added++;
+        }
+
+        shortestSourceField.setText("1");
+        clearAlgorithmHighlights();
+        refreshViews();
+        viewModel.setStatusText("已生成 220 城市压测数据。");
+        algorithmOutputArea.setText("已生成压测数据：220 城市，" + graph.edges().size() + " 条线路（固定随机种子 123456789）。");
+    }
+
+    @FXML
+    private void onExportReportAssets() {
+        try {
+            Path output = Path.of("data/report-assets.txt");
+            Files.createDirectories(output.getParent());
+
+            List<String> lines = new ArrayList<>();
+            lines.add("CommNet Planner 报告素材导出");
+            lines.add("城市数量: " + graph.cities().size());
+            lines.add("线路数量: " + graph.edges().size());
+
+            ConnectivityResult connectivity = augmentConnectivityService.analyze(graph);
+            lines.add("连通分量: " + connectivity.componentCount());
+            lines.add("连通性: " + (connectivity.connected() ? "连通" : "不连通"));
+            lines.add("建议新增线路总长度: " + connectivity.suggestedTotalLength());
+
+            if (!graph.cities().isEmpty()) {
+                int sourceId = graph.cities().iterator().next().id();
+                ShortestPathResult shortest = shortestPathService.calculate(graph, sourceId);
+                long reachable = shortest.entries().stream().filter(ShortestPathResult.PathEntry::reachable).count();
+                lines.add("样例最短路源点: " + sourceId);
+                lines.add("样例可达城市数量: " + reachable);
+            }
+
+            SteinerResult steiner = steinerService.analyze(graph);
+            lines.add("Steiner基线长度: " + steiner.baselineMstLength());
+            lines.add("Steiner近似长度: " + steiner.improvedLength());
+            lines.add("Steiner改进值: " + steiner.improvement());
+            lines.add("");
+            lines.add("===== 当前算法输出面板内容 =====");
+            lines.add(algorithmOutputArea.getText() == null ? "" : algorithmOutputArea.getText());
+
+            Files.write(output, lines, StandardCharsets.UTF_8);
+            viewModel.setStatusText("报告素材已导出: " + output);
+        } catch (IOException e) {
+            showError("导出失败: " + e.getMessage());
+        }
+    }
+
+    private void selectCityInTable(int cityId) {
+        for (City city : cityItems) {
+            if (city.id() == cityId) {
+                cityTable.getSelectionModel().select(city);
+                if (hasVisibleVerticalTableScrollBar()) {
+                    cityTable.scrollTo(city);
+                }
+                return;
+            }
+        }
+    }
+
+    private boolean hasVisibleVerticalTableScrollBar() {
+        for (javafx.scene.Node node : cityTable.lookupAll(".scroll-bar")) {
+            if (node instanceof ScrollBar bar && bar.getOrientation() == Orientation.VERTICAL && bar.isVisible()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void runTraversal(boolean returnToSource) {
+        try {
+            Integer sourceId = tryParseInt(shortestSourceField.getText(), "遍历源点ID");
+            if (sourceId == null) {
+                return;
+            }
+            TraversalResult result = traversalService.solve(graph, sourceId, returnToSource);
+            suggestedEdges = List.of();
+            highlightedPathEdgeKeys.clear();
+            overlayHighlightedEdges = List.of();
+            highlightedPathEdgeKeys.addAll(toEdgeKeySet(result.expandedRoute()));
+            renderGraph();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(returnToSource ? "【遍历全部城市并回源】\n" : "【遍历全部城市（不回源）】\n")
+                    .append("求解方式: ").append(result.exactUsed() ? "精确(位压DP)" : "启发式(最近邻+2-opt)").append("\n")
+                    .append("总距离: ").append(result.totalDistance()).append("\n")
+                    .append("终端访问序列: ").append(formatPath(result.terminalVisitOrder())).append("\n")
+                    .append("展开后路径: ").append(formatPath(result.expandedRoute())).append("\n");
+            algorithmOutputArea.setText(sb.toString());
+            viewModel.setStatusText("全城市遍历求解完成。");
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
     }
 
     private double percentile(List<Double> values, double p) {
