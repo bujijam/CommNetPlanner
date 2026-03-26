@@ -12,7 +12,7 @@ public class CommNetApp extends Application {
         FXMLLoader loader = new FXMLLoader(CommNetApp.class.getResource("/org/example/ui/MainView.fxml"));
         // 读取 FXML 得到根节点，再构造指定尺寸场景
         Scene scene = new Scene(loader.load(), 1280, 800);
-        stage.setTitle("通信网络规划器 - CommNetApp");
+        stage.setTitle("通信网络规划器 - CommNetPlanner");
         stage.setScene(scene);
         stage.show();
     }

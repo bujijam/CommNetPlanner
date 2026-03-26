@@ -23,7 +23,7 @@
 <BorderPane prefHeight="820.0" prefWidth="1360.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.ui.MainController">
     <top>
         <HBox spacing="10.0" style="-fx-padding: 12; -fx-background-color: linear-gradient(to right, #0f172a, #1e293b);">
-            <Label style="-fx-font-size: 18; -fx-text-fill: #e2e8f0; -fx-font-weight: bold;" text="CommNet Planner · JavaFX" />
+            <Label style="-fx-font-size: 18; -fx-text-fill: #e2e8f0; -fx-font-weight: bold;" text="通信网络规划器" />
             <Separator orientation="VERTICAL" />
             <Button mnemonicParsing="false" onAction="#onLoadData" text="导入数据" />
             <Button mnemonicParsing="false" onAction="#onSaveData" text="保存数据" />
