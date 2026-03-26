@@ -251,6 +251,47 @@ public class MainController {
         }
     }
 
+    @FXML
+    private void onRunSteinerComparison() {
+        try {
+            SteinerResult result = steinerService.analyze(graph); // 执行 Steiner 近似分析
+            highlightedPathEdgeKeys.clear(); // 清空旧路径高亮
+            highlightedPathEdgeKeys.addAll(toEdgeKeySetFromEdges(result.improvedEdges())); // 设置改进边为高亮集合
+            overlayHighlightedEdges = result.improvedEdges(); // 叠加高亮边用于渲染器加粗显示
+            suggestedEdges = List.of(); // 清空补边建议列表避免样式冲突
+            renderGraph(); // 触发画布重绘展示结果
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("【Steiner 最小树近似对比】\n")
+                    .append("终端城市数: ").append(result.terminalCount()).append("\n")
+                    .append("MST 基线长度: ").append(result.baselineMstLength()).append("\n")
+                    .append("Steiner 近似长度: ").append(result.improvedLength()).append("\n")
+                    .append("改进长度: ").append(result.improvement()).append("\n");
+            if (result.usedAuxiliaryPoint()) {
+                sb.append("辅助点坐标: (")
+                        .append(String.format("%.2f", result.auxiliaryX()))
+                        .append(", ")
+                        .append(String.format("%.2f", result.auxiliaryY()))
+                        .append(")\n");
+            } else {
+                sb.append("本轮未找到可改进的辅助点。\n");
+            }
+            sb.append("已在画布高亮最短连通路线边数: ").append(result.improvedEdges().size()).append("\n");
+            algorithmOutputArea.setText(sb.toString());
+            viewModel.setStatusText("Steiner 对比完成。");
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private Set<String> toEdgeKeySetFromEdges(List<Edge> edges) {
+        Set<String> edgeKeys = new HashSet<>();
+        for (Edge edge : edges) {
+            edgeKeys.add(Graph.normalizedEdgeKey(edge.fromId(), edge.toId()));
+        }
+        return edgeKeys;
+    }
+
     private Set<String> toEdgeKeySet(List<Integer> path) {
         Set<String> edgeKeys = new HashSet<>();
         for (int i = 1; i < path.size(); i++) {
