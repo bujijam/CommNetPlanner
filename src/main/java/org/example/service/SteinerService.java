@@ -131,9 +131,10 @@ public class SteinerService {
     private List<Edge> toTerminalEdges(MstResult mstResult, List<Point> terminals) {
         Set<Edge> result = new LinkedHashSet<>();
         List<Point> viaAux = new ArrayList<>();
+        Set<Integer> terminalIds = terminals.stream().map(point -> point.id).collect(java.util.stream.Collectors.toSet());
         for (TreeEdge edge : mstResult.edges()) {
-            boolean aTerminal = edge.a.id > 0;
-            boolean bTerminal = edge.b.id > 0;
+            boolean aTerminal = terminalIds.contains(edge.a.id);
+            boolean bTerminal = terminalIds.contains(edge.b.id);
             if (aTerminal && bTerminal) {
                 int fromId = Math.min(edge.a.id, edge.b.id);
                 int toId = Math.max(edge.a.id, edge.b.id);

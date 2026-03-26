@@ -623,8 +623,8 @@ public class MainController {
         shortestSourceField.setText("1");
         clearAlgorithmHighlights();
         refreshViews();
-        viewModel.setStatusText("已生成 220 城市压测数据。");
-        algorithmOutputArea.setText("已生成压测数据：220 城市，" + graph.edges().size() + " 条线路（固定随机种子 123456789）。");
+        viewModel.setStatusText("已生成 220 城市测试数据。");
+        algorithmOutputArea.setText("已生成测试数据：220 城市，" + graph.edges().size() + " 条线路（固定随机种子 123456789）。");
     }
 
     @FXML
@@ -661,7 +661,7 @@ public class MainController {
 
             Files.write(output, lines, StandardCharsets.UTF_8);
             viewModel.setStatusText("报告素材已导出: " + output);
-        } catch (IOException e) {
+        } catch (Exception e) {
             showError("导出失败: " + e.getMessage());
         }
     }

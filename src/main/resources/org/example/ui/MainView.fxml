@@ -38,7 +38,7 @@
             <Label style="-fx-text-fill: #cbd5e1;" text="画布比例" />
             <ComboBox fx:id="zoomComboBox" onAction="#onZoomPresetChanged" prefWidth="110.0" />
             <Button mnemonicParsing="false" onAction="#onRunEsteinBenchmark" text="Estein250测试" />
-            <Button mnemonicParsing="false" onAction="#onGenerateBenchmarkData" text="生成220城压测" />
+            <Button mnemonicParsing="false" onAction="#onGenerateBenchmarkData" text="生成220城测试" />
             <Button mnemonicParsing="false" onAction="#onExportReportAssets" text="导出报告素材" />
         </HBox>
     </top>
