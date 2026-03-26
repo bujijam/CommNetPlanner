@@ -1,5 +1,8 @@
 package org.example.ui;
 
+import javafx.application.Platform;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -8,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import org.example.graph.Graph;
 import org.example.model.City;
@@ -103,6 +107,77 @@ public class MainController {
     private final ObservableList<String> zoomPresets = FXCollections.observableArrayList(
             "35%", "50%", "75%", "100%", "125%", "150%", "200%", "300%", "500%"
     );
+
+    // 程序界面初始化
+    @FXML
+    private void initialize() {
+        statusLabel.textProperty().bind(viewModel.statusTextProperty());
+        cityIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().id()));
+        cityNameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().name()));
+        cityXColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().x()));
+        cityYColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().y()));
+        cityDescColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().description()));
+        topologyCanvas.widthProperty().bind(canvasContainer.widthProperty());
+        topologyCanvas.heightProperty().bind(canvasContainer.heightProperty());
+        canvasContainer.setMinWidth(0);
+        canvasContainer.setMinHeight(0);
+        rightPanelBox.setMinWidth(0);
+        rightPanelBox.setMinHeight(0);
+        topologyCanvas.widthProperty().addListener((obs, old, val) -> renderGraph());
+        topologyCanvas.heightProperty().addListener((obs, old, val) -> renderGraph());
+        cityTable.setItems(cityItems);
+        topologyCanvas.setFocusTraversable(false);
+        edgeListView.setItems(edgeItems);
+        zoomComboBox.setItems(zoomPresets);
+        zoomComboBox.setValue("100%");
+        edgeListView.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(Edge edge, boolean empty) {
+                super.updateItem(edge, empty);
+                setText(empty || edge == null ? null : edge.fromId() + " <-> " + edge.toId() + " (len=" + edge.length() + ")");
+            }
+        });
+
+        cityTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
+            if (selected == null) {
+                selectedCityId = null;
+                renderGraph();
+                return;
+            }
+            selectedCityId = selected.id();
+            cityIdField.setText(String.valueOf(selected.id()));
+            cityNameField.setText(selected.name());
+            cityXField.setText(String.valueOf(selected.x()));
+            cityYField.setText(String.valueOf(selected.y()));
+            cityDescArea.setText(selected.description());
+            shortestSourceField.setText(String.valueOf(selected.id()));
+            renderGraph();
+        });
+        edgeListView.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
+            if (selected == null) {
+                return;
+            }
+            edgeFromField.setText(String.valueOf(selected.fromId()));
+            edgeToField.setText(String.valueOf(selected.toId()));
+        });
+
+        interactionController.attach(topologyCanvas, this::renderGraph);
+        mainSplitPane.getDividers().forEach(divider ->
+                divider.positionProperty().addListener((obs, old, val) -> renderGraph()));
+        topologyCanvas.setOnMouseMoved(event -> updateMouseCoord(event.getX(), event.getY()));
+        topologyCanvas.setOnMouseExited(event -> mouseCoordLabel.setText("鼠标: -"));
+        topologyCanvas.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                selectCityByCanvasPoint(event.getX(), event.getY());
+            } else if (event.getButton() == MouseButton.SECONDARY) {
+                createCityAtCanvasPoint(event.getX(), event.getY());
+            }
+        });
+        loadFromDisk();
+        refreshViews();
+        Platform.runLater(this::renderGraph);
+        viewModel.setStatusText("JavaFX UI 初始化成功");
+    }
 
     @FXML
     // 处理“导入数据”
@@ -587,6 +662,50 @@ public class MainController {
         } catch (IOException e) {
             showError("导出失败: " + e.getMessage());
         }
+    }
+
+    private void createCityAtCanvasPoint(double canvasX, double canvasY) {
+        Point world = canvasToWorld(canvasX, canvasY);
+        int newId = graph.cities().stream().mapToInt(City::id).max().orElse(0) + 1;
+        int x = (int) Math.round(world.x);
+        int y = (int) Math.round(world.y);
+        City city = new City(newId, "City" + newId, x, y, "");
+        graph.upsertCity(city);
+        refreshViews();
+        clearAlgorithmHighlights();
+        selectCityInTable(newId);
+        viewModel.setStatusText("已创建城市: " + city.name() + "(" + city.id() + ")");
+    }
+
+    private void selectCityByCanvasPoint(double canvasX, double canvasY) {
+        if (graph.cities().isEmpty()) {
+            return;
+        }
+        Point world = canvasToWorld(canvasX, canvasY);
+        City nearest = graph.cities().stream()
+                .min(Comparator.comparingDouble(city -> Math.hypot(city.x() - world.x, city.y() - world.y)))
+                .orElse(null);
+        if (nearest == null) {
+            return;
+        }
+        double threshold = 12 / (viewFitScale * interactionController.scale());
+        if (Math.hypot(nearest.x() - world.x, nearest.y() - world.y) <= threshold) {
+            selectCityInTable(nearest.id());
+        }
+    }
+
+    // 更新鼠标指针坐标
+    private void updateMouseCoord(double canvasX, double canvasY) {
+        if (topologyCanvas.getWidth() <= 0 || topologyCanvas.getHeight() <= 0) {
+            mouseCoordLabel.setText("鼠标: (0.0, 0.0)");
+            return;
+        }
+        if (graph.cities().isEmpty()) {
+            mouseCoordLabel.setText(String.format("鼠标: (%.1f, %.1f)", canvasX, canvasY));
+            return;
+        }
+        Point world = canvasToWorld(canvasX, canvasY);
+        mouseCoordLabel.setText(String.format("鼠标: (%.1f, %.1f)", world.x, world.y));
     }
 
     private void selectCityInTable(int cityId) {
