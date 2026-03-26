@@ -6,7 +6,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.canvas.Canvas;
@@ -245,6 +244,9 @@ public class MainController {
             return;
         }
         graph.removeCity(id); // 从图中删除城市及关联边
+        if (selectedCityId != null && selectedCityId.equals(id)) {
+            selectedCityId = null;
+        }
         refreshViews();
         viewModel.setStatusText("城市已删除: " + id);
         clearAlgorithmHighlights();
