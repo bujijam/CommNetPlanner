@@ -1,0 +1,9 @@
+{
+  "scenarioId": "wenchuan-2008",
+  "name": "2008年汶川地震",
+  "disasterType": "EARTHQUAKE",
+  "epicenterLat": 31.0,
+  "epicenterLon": 103.4,
+  "magnitude": 8.0,
+  "affectedRadiusKm": 200.0
+}

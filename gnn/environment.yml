@@ -1,0 +1,23 @@
+name: commnet-gnn
+channels:
+  - pytorch
+  - pyg
+  - conda-forge
+#  - nvidia
+  - defaults
+dependencies:
+  - python=3.13
+#  - pytorch>=2.10.0
+#  - torchvision
+#  - pytorch-cuda==13.0
+  - pip
+  - pip:
+      - torch
+      - torchvision
+      - torch-geometric>=2.5.3
+      - onnx>=1.16.1
+      - onnxruntime-gpu>=1.18.0
+      - numpy>=1.26.4
+      - scikit-learn>=1.5.0
+      - matplotlib>=3.9.0
+      - tqdm>=4.66.4

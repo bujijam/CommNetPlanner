@@ -1,0 +1,49 @@
+{
+  "nodes": {
+    "type": "FeatureCollection",
+    "features": [
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.59,31.47]},"properties":{"id":1,"name":"汶川指挥中心","description":"主指挥节点","nodeType":"COMMAND","population":50000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.73,31.47]},"properties":{"id":2,"name":"绵阳市医院","description":"区域综合医院","nodeType":"HOSPITAL","population":120000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.62,30.99]},"properties":{"id":3,"name":"都江堰避难所","description":"应急避难场所","nodeType":"SHELTER","population":30000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.46,31.83]},"properties":{"id":4,"name":"北川中继站","description":"通信中继站","nodeType":"RELAY","population":10000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.85,31.68]},"properties":{"id":5,"name":"茂县受灾点","description":"严重受灾区域","nodeType":"AFFECTED","population":80000,"operational":false,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.96,30.99]},"properties":{"id":6,"name":"彭州避难所","description":"避难安置点","nodeType":"SHELTER","population":20000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.40,31.13]},"properties":{"id":7,"name":"德阳市医院","description":"城市综合医院","nodeType":"HOSPITAL","population":150000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.57,32.64]},"properties":{"id":8,"name":"松潘中继站","description":"山区通信中继","nodeType":"RELAY","population":5000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.07,30.67]},"properties":{"id":9,"name":"成都指挥中心","description":"成都应急指挥","nodeType":"COMMAND","population":500000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.57,30.90]},"properties":{"id":10,"name":"青城山受灾点","description":"受灾乡镇","nodeType":"AFFECTED","population":15000,"operational":false,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.53,32.07]},"properties":{"id":11,"name":"南坝中继站","description":"北部通信中继","nodeType":"RELAY","population":8000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.16,30.83]},"properties":{"id":12,"name":"新都区医院","description":"城区综合医院","nodeType":"HOSPITAL","population":200000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.49,31.55]},"properties":{"id":13,"name":"汶川北避难所","description":"北部避难场所","nodeType":"SHELTER","population":12000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.28,30.98]},"properties":{"id":14,"name":"广汉中继站","description":"平原通信中继","nodeType":"RELAY","population":40000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.22,31.34]},"properties":{"id":15,"name":"绵竹受灾点","description":"受灾城市","nodeType":"AFFECTED","population":70000,"operational":false,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.08,31.52]},"properties":{"id":16,"name":"遵道避难所","description":"山谷避难场所","nodeType":"SHELTER","population":6000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[104.75,31.78]},"properties":{"id":17,"name":"江油指挥中心","description":"北部应急指挥","nodeType":"COMMAND","population":90000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.90,30.81]},"properties":{"id":18,"name":"郫都中继站","description":"近郊通信中继","nodeType":"RELAY","population":25000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[105.09,31.09]},"properties":{"id":19,"name":"三台县医院","description":"东部区域医院","nodeType":"HOSPITAL","population":110000,"operational":true,"predictedDamageScore":0.0}},
+      {"type":"Feature","geometry":{"type":"Point","coordinates":[103.81,31.02]},"properties":{"id":20,"name":"龙门山受灾点","description":"断裂带受灾区","nodeType":"AFFECTED","population":9000,"operational":false,"predictedDamageScore":0.0}}
+    ]
+  },
+  "links": [
+    {"fromId":1,"toId":2,"linkType":"FIBER","bandwidth":1000,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":1,"toId":3,"linkType":"FIBER","bandwidth":1000,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":2,"toId":4,"linkType":"MICROWAVE","bandwidth":500,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":3,"toId":5,"linkType":"FIBER","bandwidth":200,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":4,"toId":7,"linkType":"FIBER","bandwidth":800,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":5,"toId":10,"linkType":"SATELLITE","bandwidth":100,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":6,"toId":9,"linkType":"FIBER","bandwidth":1000,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":7,"toId":9,"linkType":"FIBER","bandwidth":1000,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":8,"toId":11,"linkType":"MICROWAVE","bandwidth":300,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":9,"toId":12,"linkType":"FIBER","bandwidth":1000,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":10,"toId":13,"linkType":"SATELLITE","bandwidth":100,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":11,"toId":17,"linkType":"FIBER","bandwidth":600,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":12,"toId":14,"linkType":"FIBER","bandwidth":800,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":13,"toId":16,"linkType":"MICROWAVE","bandwidth":200,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":14,"toId":19,"linkType":"FIBER","bandwidth":600,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":15,"toId":19,"linkType":"SATELLITE","bandwidth":100,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":16,"toId":20,"linkType":"SATELLITE","bandwidth":50,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":17,"toId":19,"linkType":"FIBER","bandwidth":600,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":18,"toId":6,"linkType":"FIBER","bandwidth":400,"baseCost":0,"predictedResistance":0.0},
+    {"fromId":1,"toId":9,"linkType":"FIBER","bandwidth":2000,"baseCost":0,"predictedResistance":0.0}
+  ]
+}

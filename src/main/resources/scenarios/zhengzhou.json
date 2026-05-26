@@ -1,0 +1,9 @@
+{
+  "scenarioId": "zhengzhou-2021",
+  "name": "2021年郑州洪涝",
+  "disasterType": "FLOOD",
+  "epicenterLat": 34.7,
+  "epicenterLon": 113.6,
+  "magnitude": 6.5,
+  "affectedRadiusKm": 100.0
+}
